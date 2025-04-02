@@ -7,13 +7,13 @@ imgR = imgR0[:, :, 0] / 255
 imgRB0 = plt.imread("robot_noise.jpg")
 imgRB = imgRB0[:, :, 0] / 255
 
-'''
+
 fig, axes = plt.subplots(1, 4, figsize=(15, 5))
 axes[0].imshow(imgR,cmap='gray')
 axes[0].set_title("Image Originale")
 axes[1].imshow(imgRB,cmap='gray')
 axes[1].set_title("Image Bruitée")
-'''
+
 
 
 ## Q4 grad, div et laplacien
@@ -50,7 +50,7 @@ axes[1].set_title("Laplacien")
 
 def funR(u, ub):
     g = grad(u)
-    return (np.linalg.norm(u - ub) ** 2)/2 + np.linalg.norm((g[0] ** 2 + g[1] ** 2)**0.5)
+    return (np.linalg.norm(u - ub) ** 2)/2 + np.linalg.norm(g[0])+np.linalg.norm(g[1])
 
 
 def grad_funR(u, ub):
@@ -76,10 +76,10 @@ def optim_gradient_fixed_step(grad_fun, x0, L, xb, max_iter=100, epsilon_grad_fu
 
 x0, pas = np.zeros(imgR.shape), 1e-3
 imgRB_opti = optim_gradient_fixed_step(grad_funR, x0, pas, imgRB)
-'''
+
 axes[2].imshow(imgRB_opti,cmap='gray')
 axes[2].set_title("Image après descente de gradient")
-'''
+
 
 ## Q6 erreur RMSE
 
@@ -95,13 +95,21 @@ print(
 
 ## Q7 comparaison avec méthode scipy
 
+def funR_vect(u):
+    v = u.reshape(imgRB.shape)
+    g = grad(v)
+    return (np.linalg.norm(v - imgRB) ** 2)/2 + np.linalg.norm(g[0])+np.linalg.norm(g[1])
+
+def grad_funR_vect(u):
+    v = u.reshape(imgRB.shape)
+    g = v - imgRB - 2 * laplacien(v)
+    return g.flatten()
+
 
 def scipy_opti(fun, grad_fun, x0):
     sol = optimize.minimize(fun, x0.flatten(), jac = grad_fun, method="BFGS").x
     return sol.reshape(x0.shape)
 
-'''
-axes[3].imshow(scipy_opti(lambda u : funR(u,imgRB), lambda u : grad_funR(u,imgRB), x0), cmap='gray')
+axes[3].imshow(scipy_opti(funR_vect, grad_funR_vect, x0), cmap='gray')
 axes[3].set_title("Image après min par scipy")
 plt.show()
-'''
