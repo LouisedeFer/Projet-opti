@@ -9,30 +9,38 @@ imgRB = imgRB0[:, :, 0] / 255
 
 
 fig, axes = plt.subplots(1, 4, figsize=(15, 5))
-axes[0].imshow(imgR,cmap='gray')
+axes[0].imshow(imgR, cmap="gray")
 axes[0].set_title("Image Originale")
-axes[1].imshow(imgRB,cmap='gray')
+axes[1].imshow(imgRB, cmap="gray")
 axes[1].set_title("Image Bruitée")
 
 
-
 ## Q4 grad, div et laplacien
-def grad(u):
-    n, m = u.shape[0], u.shape[1]
 
-    dux = u[1:, :] - u[:-1, :]
-    dux = np.concatenate((dux, np.zeros((1, m))), axis=0)
-    duy = u[:, 1:] - u[:, :-1]
-    duy = np.concatenate((duy, np.zeros((n, 1))), axis=1)
+
+def grad(u):
+    dux = np.zeros(u.shape)
+    duy = np.zeros(u.shape)
+
+    dux[:-1, :] = u[1:, :] - u[:-1, :]
+    duy[:, :-1] = u[:, 1:] - u[:, :-1]
 
     return np.array([dux, duy])
 
 
 def div(v):
-    divx = v[0, 1:, :] - v[0, :-1, :]
-    divx = np.concatenate((divx, np.array([-v[0, -1, :]])), axis=0)
-    divy = v[1, :, 1:] - v[1, :, :-1]
-    divy = np.concatenate((divy, np.array(-v[1, :, -1].reshape(-1, 1))), axis=1)
+    n, m = v.shape[1], v.shape[2]
+    divx = np.zeros((n, m))
+    divy = np.zeros((n, m))
+
+    divx[1:, :] = v[0, 1:, :] - v[0, :-1, :]
+    divx[0, :] = v[0, 0, :]
+    divx[-1, :] = -v[0, -2, :]
+
+    divy[:, 1:] = v[1, :, 1:] - v[1, :, :-1]
+    divy[:, 0] = v[1, :, 0]
+    divy[:, -1] = -v[1, :, -2]
+
     return divx + divy
 
 
@@ -50,34 +58,44 @@ axes[1].set_title("Laplacien")
 
 def funR(u, ub):
     g = grad(u)
-    return (np.linalg.norm(u - ub) ** 2)/2 + np.linalg.norm(g[0])+np.linalg.norm(g[1])
+    return (
+        (np.linalg.norm(u - ub, ord=2) ** 2) / 2
+        + np.linalg.norm(g[0], ord=2) ** 2
+        + np.linalg.norm(g[1], ord=2) ** 2
+    )
 
 
 def grad_funR(u, ub):
     return u - ub - 2 * laplacien(u)
 
 
+"""
+# test pour vérifier les implémentations des fonctions précédentes
+
 def approx_grad_funR(x, xb, eps, h):
     return (funR(x + eps * h, xb) - funR(x - eps * h, xb)) / (2 * eps)
 
 u = np.random.random(imgRB.shape)
 eps = 10 ** (-5)
-h = np.ones(imgRB.shape)
-print(approx_grad_funR(u,imgRB,eps,h)-np.dot(np.transpose(grad_funR(u, imgRB)),h))
+h = np.random.random(imgRB.shape)
+h = h/np.linalg.norm(h)
+print(approx_grad_funR(u, imgRB, eps, h) - np.dot(np.transpose(grad_funR(u, imgRB)).ravel(), h.ravel()))
+"""
+
 
 def optim_gradient_fixed_step(grad_fun, x0, L, xb, max_iter=100, epsilon_grad_fun=1e-8):
     nb_iter = 0
     x = x0
-    while nb_iter <= max_iter and np.linalg.norm(grad_fun(x,xb)) > epsilon_grad_fun:
+    while nb_iter <= max_iter and np.linalg.norm(grad_fun(x, xb)) > epsilon_grad_fun:
         nb_iter += 1
-        x -= L * grad_fun(x,xb)
+        x -= L * grad_fun(x, xb)
     return x
 
 
 x0, pas = np.zeros(imgR.shape), 1e-3
 imgRB_opti = optim_gradient_fixed_step(grad_funR, x0, pas, imgRB)
 
-axes[2].imshow(imgRB_opti,cmap='gray')
+axes[2].imshow(imgRB_opti, cmap="gray")
 axes[2].set_title("Image après descente de gradient")
 
 
@@ -95,10 +113,16 @@ print(
 
 ## Q7 comparaison avec méthode scipy
 
+
 def funR_vect(u):
     v = u.reshape(imgRB.shape)
     g = grad(v)
-    return (np.linalg.norm(v - imgRB) ** 2)/2 + np.linalg.norm(g[0])+np.linalg.norm(g[1])
+    return (
+        (np.linalg.norm(v - imgRB) ** 2) / 2
+        + np.linalg.norm(g[0])
+        + np.linalg.norm(g[1])
+    )
+
 
 def grad_funR_vect(u):
     v = u.reshape(imgRB.shape)
@@ -106,10 +130,11 @@ def grad_funR_vect(u):
     return g.flatten()
 
 
+"""
 def scipy_opti(fun, grad_fun, x0):
     sol = optimize.minimize(fun, x0.flatten(), jac = grad_fun, method="BFGS").x
     return sol.reshape(x0.shape)
 
 axes[3].imshow(scipy_opti(funR_vect, grad_funR_vect, x0), cmap='gray')
 axes[3].set_title("Image après min par scipy")
-plt.show()
+plt.show()"""
