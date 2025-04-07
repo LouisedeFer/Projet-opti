@@ -54,7 +54,7 @@ axes[1].set_title("Laplacien")
 ## Q5 Méthode de descente de gradient à pas fixe
 
 
-def funR(u, ub): # ne sert pas
+def funR(u, ub):  # ne sert pas
     g = grad(u)
     return (
         (np.linalg.norm(u - ub, ord=2) ** 2) / 2
@@ -141,7 +141,7 @@ axes[3].set_title("Après min par scipy")
 # Q10 descente de gradient à pas fixe de TV-L2
 
 
-def TVL2(u, ub): # ne sert pas
+def TVL2(u, ub):  # ne sert pas
     g = grad(u)
     return (
         (np.linalg.norm(u - ub, ord=2) ** 2) / 2
@@ -183,16 +183,18 @@ print(
 
 beta = 0.9
 
+
 def optim_gradient_momentum(grad_fun, x0, L, xb, max_iter=100, epsilon_grad_fun=1e-8):
     global beta
     nb_iter = 0
     x = x0
-    p = -grad_fun(x,xb)
+    p = -grad_fun(x, xb)
     while nb_iter <= max_iter and np.linalg.norm(grad_fun(x, xb)) > epsilon_grad_fun:
         nb_iter += 1
-        p = beta*p+(1-beta)*(-grad_fun(x,xb))
+        p = beta * p + (1 - beta) * (-grad_fun(x, xb))
         x += L * p
     return x
+
 
 x0, pas, m_iter = np.zeros(imgR.shape), 1e-2, 100
 imgRB_opti_TVL2_mom = optim_gradient_momentum(grad_TVL2, x0, pas, imgRB, m_iter)
