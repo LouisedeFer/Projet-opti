@@ -80,8 +80,8 @@ eps = 10 ** (-5)
 h = np.random.random(imgRB.shape)
 h = h/np.linalg.norm(h)
 print(approx_grad_funR(u, imgRB, eps, h) - np.dot(np.transpose(grad_funR(u, imgRB)).ravel(), h.ravel()))
-"""
 
+"""
 
 def optim_gradient_fixed_step(grad_fun, x0, L, xb, max_iter=100, epsilon_grad_fun=1e-8):
     nb_iter = 0
